@@ -12,7 +12,7 @@ lpips-ssim-image-filter/
 │   ├── ema/         # Generated images
 │   └── mask/        # Corresponding masks (matched by filename pattern)
 ├── output/          # Automatically created result folder
-│   └── output\_lpips\_03\_ssim\_06/
+│   └── output\output_lpips_03_ssim_06/ # example.
 ├── filter\_images.py
 ├── run.sh
 ├── LICENSE
