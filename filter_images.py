@@ -53,7 +53,10 @@ def process_one_folder(real_dir, gen_dir, mask_dir, output_dir, lpips_model, arg
         except:
             continue
 
+    print(f"[DEBUG] Loaded {len(real_images)} real reference images.")
+
     records = []
+    visualized_count = 0
     for fname in tqdm(os.listdir(gen_dir)):
         try:
             gen_img = Image.open(os.path.join(gen_dir, fname)).convert('RGB')
@@ -89,10 +92,15 @@ def process_one_folder(real_dir, gen_dir, mask_dir, output_dir, lpips_model, arg
                 if os.path.exists(src_mask):
                     shutil.copy(src_mask, os.path.join(output_dir, "filtered_bad_masks", mask_file))
 
-            # 可視化
-            if args.visualize and best_real_img is not None:
-                visualize_lpips_diff(gen_img, best_real_img, best_lpips_map,
-                    os.path.join(output_dir, "visualizations", f"diff_{fname}.png"))
+            # 可視化（強制執行並計數）
+            if args.visualize:
+                try:
+                    visualize_lpips_diff(gen_img, best_real_img, best_lpips_map,
+                        os.path.join(output_dir, "visualizations", f"diff_{fname}.png"))
+                    visualized_count += 1
+                    print(f"[VISUALIZE] Saved visualization for {fname}")
+                except Exception as e:
+                    print(f"[VISUALIZE ERROR] Failed to visualize {fname}: {e}")
         except Exception as e:
             print(f"Error {fname}: {e}")
 
@@ -116,6 +124,7 @@ def process_one_folder(real_dir, gen_dir, mask_dir, output_dir, lpips_model, arg
         f.write(f"filtered_bad_masks: {count_bad_mask} masks\n")
         f.write(f"avg_lpips: {avg_lpips:.4f}\n")
         f.write(f"avg_ssim: {avg_ssim:.4f}\n")
+        f.write(f"visualized_diffs: {visualized_count} images\n")
 
     json_result = {
         "filtered_good": count_good,
@@ -123,7 +132,8 @@ def process_one_folder(real_dir, gen_dir, mask_dir, output_dir, lpips_model, arg
         "filtered_bad": count_bad,
         "filtered_bad_masks": count_bad_mask,
         "avg_lpips": avg_lpips,
-        "avg_ssim": avg_ssim
+        "avg_ssim": avg_ssim,
+        "visualized_diffs": visualized_count
     }
     with open(os.path.join(output_dir, "result.json"), 'w') as jf:
         json.dump(json_result, jf, indent=4)
@@ -161,4 +171,5 @@ if __name__ == "__main__":
             process_one_folder(r, g, m, o, lpips_model, args)
     else:
         process_one_folder(args.real_dir, args.gen_dir, args.mask_dir, args.output_dir, lpips_model, args)
+
 
